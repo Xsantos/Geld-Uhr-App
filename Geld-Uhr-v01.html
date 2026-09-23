@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<title>Geld-Uhr</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
+.app{min-height:100vh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 22px env(safe-area-inset-bottom)}
+.top{display:flex;justify-content:flex-end;padding-top:14px}.gear{border:0;background:none;font-size:25px;padding:8px}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;margin-top:-45px}
+.amount{font-size:64px;line-height:1;font-weight:500;letter-spacing:-2px;border:0;background:none;padding:25px 10px;min-width:100%;text-align:center}
+.amount.running{font-weight:700}
+.tabs{display:flex;gap:5px;margin-top:34px;background:#f2f2f7;border-radius:13px;padding:4px}
+.tab{border:0;background:transparent;border-radius:10px;padding:9px 15px;font-size:14px}.tab.active{background:#fff;box-shadow:0 1px 4px #0001;font-weight:600}
+.hint{font-size:12px;color:#8e8e93;margin-top:18px}
+.overlay{position:fixed;inset:0;background:#fff;display:none;z-index:5;overflow:auto;padding:env(safe-area-inset-top) 22px env(safe-area-inset-bottom)}
+.overlay.open{display:block}.head{display:flex;align-items:center;gap:10px;padding:14px 0}.back{border:0;background:none;font-size:17px}.title{font-size:28px;font-weight:700}
+.card{background:#f2f2f7;border-radius:18px;padding:16px;margin:14px 0}.label{font-size:13px;color:#666;margin-bottom:7px}
+input{width:100%;border:0;background:#fff;border-radius:11px;padding:12px;font-size:17px;outline:none}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}.row+.row{border-top:1px solid #ddd}
+.switch{width:50px;height:30px;border:0;border-radius:20px;background:#d1d1d6;position:relative}.switch.on{background:#34c759}.switch:after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:.15s}.switch.on:after{left:22px}
+.small{font-size:12px;color:#777;line-height:1.4}.save{width:100%;border:0;background:#111;color:#fff;border-radius:14px;padding:14px;font-size:16px;margin-top:5px}
+</style>
+</head>
+<body>
+<div class="app">
+ <div class="top"><button class="gear" id="openSettings">⚙︎</button></div>
+ <main>
+  <button class="amount" id="amount">0,00 €</button>
+  <div class="tabs">
+   <button class="tab active" data-mode="day">Tag</button>
+   <button class="tab" data-mode="week">Woche</button>
+   <button class="tab" data-mode="month">Monat</button>
+  </div>
+  <div class="hint" id="hint">Tippen zum Starten</div>
+ </main>
+</div>
+
+<div class="overlay" id="settings">
+ <div class="head"><button class="back" id="closeSettings">‹ Zurück</button><div class="title">Einstellungen</div></div>
+ <div class="card">
+  <div class="label">Monatsgehalt</div>
+  <input id="salary" type="number" inputmode="decimal" step="0.01" placeholder="2500">
+ </div>
+ <div class="card">
+  <div class="label">Arbeitszeit pro Woche</div>
+  <input id="weekly" type="number" inputmode="decimal" step="0.1" placeholder="39">
+ </div>
+ <div class="card">
+  <div class="row"><span>Automatische Arbeitszeit</span><button class="switch" id="autoSwitch"></button></div>
+  <div class="small">Wenn ausgeschaltet, wird nur über Tippen auf den Betrag gestartet und gestoppt.</div>
+ </div>
+ <button class="save" id="save">Speichern</button>
+ <div class="small" style="margin:16px 4px">Die detaillierten Wochentage, unterschiedliche Zeiten und Pausen kommen in der nächsten Version.</div>
+</div>
+
+<script>
+const €=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n);
+let state=JSON.parse(localStorage.getItem('gelduhr')||'null')||{salary:2500,weekly:39,auto:false,sessions:[]};
+let running=false,start=0,mode='day';
+
+function workRate(){return (Number(state.salary)||0)/(Number(state.weekly)||1)/52/3600}
+function todayKey(d=new Date()){return d.toISOString().slice(0,10)}
+function monday(d=new Date()){let x=new Date(d);let day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
+function monthStart(d=new Date()){return new Date(d.getFullYear(),d.getMonth(),1)}
+function monthEnd(d=new Date()){return new Date(d.getFullYear(),d.getMonth()+1,1)}
+
+function sessionValue(s,end=Date.now()){
+ let a=s.start,b=s.end||end; return Math.max(0,(b-a)/1000)*workRate();
+}
+function earned(mode){
+ let now=Date.now(), d=new Date();
+ let from= mode==='day'?new Date(d.getFullYear(),d.getMonth(),d.getDate()):mode==='week'?monday(d):monthStart(d);
+ let to= mode==='day'?new Date(d.getFullYear(),d.getMonth(),d.getDate()+1):mode==='week'?new Date(from.getTime()+7*86400000):monthEnd(d);
+ let total=state.sessions.reduce((sum,s)=>{
+   let a=Math.max(s.start,from.getTime()), b=Math.min(s.end||now,to.getTime());
+   return sum+(b>a?(b-a)/1000*workRate():0)
+ },0);
+ if(running) {let a=Math.max(start,from.getTime()),b=Math.min(now,to.getTime());if(b>a) total+=(b-a)/1000*workRate()}
+ return total;
+}
+function render(){
+ document.getElementById('amount').textContent=€(earned(mode));
+ document.getElementById('amount').classList.toggle('running',running);
+ document.getElementById('hint').textContent=running?'Tippen zum Stoppen':'Tippen zum Starten';
+ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));
+}
+document.querySelectorAll('.tab').forEach(x=>x.onclick=()=>{mode=x.dataset.mode;render()});
+document.getElementById('amount').onclick=()=>{
+ if(state.auto) return;
+ if(!running){running=true;start=Date.now()}else{state.sessions.push({start,end:Date.now()});running=false;start=0;localStorage.setItem('gelduhr',JSON.stringify(state))}
+ render();
+};
+setInterval(render,250);
+
+const settings=document.getElementById('settings');
+document.getElementById('openSettings').onclick=()=>{
+ document.getElementById('salary').value=state.salary;
+ document.getElementById('weekly').value=state.weekly;
+ document.getElementById('autoSwitch').classList.toggle('on',state.auto);
+ settings.classList.add('open')
+};
+document.getElementById('closeSettings').onclick=()=>settings.classList.remove('open');
+document.getElementById('autoSwitch').onclick=()=>document.getElementById('autoSwitch').classList.toggle('on');
+document.getElementById('save').onclick=()=>{
+ state.salary=Number(document.getElementById('salary').value)||0;
+ state.weekly=Number(document.getElementById('weekly').value)||1;
+ state.auto=document.getElementById('autoSwitch').classList.contains('on');
+ localStorage.setItem('gelduhr',JSON.stringify(state));settings.classList.remove('open');render()
+};
+render();
+</script>
+</body>
+</html>
