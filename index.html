@@ -36,7 +36,7 @@ input[type="number"],input[type="time"]{width:100%;border:0;background:#fff;bord
 .switch:after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:.15s}
 .switch.on:after{left:22px}
 .small{font-size:12px;color:#777;line-height:1.4}
-.save{width:100%;border:0;background:#111;color:#fff;border-radius:14px;padding:14px;font-size:16px;margin-top:10px;cursor:pointer}
+.save{width:100%;border:0;background:#111;color:#fff !important;-webkit-text-fill-color:#fff !important;border-radius:14px;padding:14px;font-size:16px;margin-top:10px;cursor:pointer}
 .reset{width:100%;border:0;background:#f2f2f7;color:#d00;border-radius:14px;padding:14px;font-size:16px;margin-top:10px;cursor:pointer}
 .days{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .dayCheck{background:#fff;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px}
@@ -58,6 +58,8 @@ button, label, a { color: #111 !important; -webkit-text-fill-color: #111 !import
 button:focus, button:active, label:focus, label:active { color: #111 !important; -webkit-text-fill-color: #111 !important; }
 .gear, .back, .tab, .amount, .advancedBtn, .addBreak, .removeBreak { color: #111 !important; -webkit-text-fill-color: #111 !important; }
 .tab.active { color: #111 !important; -webkit-text-fill-color: #111 !important; }
+.save, .save:visited, .save:active { color:#fff !important; -webkit-text-fill-color:#fff !important; }
+input::placeholder { color:#8e8e93 !important; -webkit-text-fill-color:#8e8e93 !important; }
 
 </style>
 </head>
