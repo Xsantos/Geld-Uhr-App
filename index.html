@@ -59,7 +59,7 @@ input{width:100%;border:0;background:#fff;border-radius:11px;padding:12px;font-s
 </div>
 
 <script>
-const €=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n);
+const formatEuro=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n);
 let state=JSON.parse(localStorage.getItem('gelduhr')||'null')||{salary:2500,weekly:39,auto:false,sessions:[]};
 let running=false,start=0,mode='day';
 
@@ -84,7 +84,7 @@ function earned(mode){
  return total;
 }
 function render(){
- document.getElementById('amount').textContent=€(earned(mode));
+ document.getElementById('amount').textContent=formatEuro(earned(mode));
  document.getElementById('amount').classList.toggle('running',running);
  document.getElementById('hint').textContent=running?'Tippen zum Stoppen':'Tippen zum Starten';
  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));
