@@ -8,111 +8,457 @@
 <meta name="theme-color" content="#ffffff">
 <title>Geld-Uhr</title>
 <style>
-*{box-sizing:border-box} body{margin:0;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:#fff;color:#111;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif}
+body{overflow:hidden}
 .app{min-height:100vh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 22px env(safe-area-inset-bottom)}
-.top{display:flex;justify-content:flex-end;padding-top:14px}.gear{border:0;background:none;font-size:25px;padding:8px}
+.top{display:flex;justify-content:flex-end;padding-top:14px;position:relative;z-index:20}
+.gear{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border:0;background:transparent;border-radius:50%;font-size:28px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.08);user-select:none}
 main{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;margin-top:-45px}
-.amount{font-size:64px;line-height:1;font-weight:500;letter-spacing:-2px;border:0;background:none;padding:25px 10px;min-width:100%;text-align:center}
+.amount{font-size:64px;line-height:1;font-weight:500;letter-spacing:-2px;border:0;background:none;padding:25px 10px;min-width:100%;text-align:center;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .amount.running{font-weight:700}
 .tabs{display:flex;gap:5px;margin-top:34px;background:#f2f2f7;border-radius:13px;padding:4px}
-.tab{border:0;background:transparent;border-radius:10px;padding:9px 15px;font-size:14px}.tab.active{background:#fff;box-shadow:0 1px 4px #0001;font-weight:600}
+.tab{border:0;background:transparent;border-radius:10px;padding:9px 15px;font-size:14px;cursor:pointer;touch-action:manipulation}
+.tab.active{background:#fff;box-shadow:0 1px 4px #0001;font-weight:600}
 .hint{font-size:12px;color:#8e8e93;margin-top:18px}
-.overlay{position:fixed;inset:0;background:#fff;display:none;z-index:5;overflow:auto;padding:env(safe-area-inset-top) 22px env(safe-area-inset-bottom)}
-.overlay.open{display:block}.head{display:flex;align-items:center;gap:10px;padding:14px 0}.back{border:0;background:none;font-size:17px}.title{font-size:28px;font-weight:700}
-.card{background:#f2f2f7;border-radius:18px;padding:16px;margin:14px 0}.label{font-size:13px;color:#666;margin-bottom:7px}
-input{width:100%;border:0;background:#fff;border-radius:11px;padding:12px;font-size:17px;outline:none}
-.row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}.row+.row{border-top:1px solid #ddd}
-.switch{width:50px;height:30px;border:0;border-radius:20px;background:#d1d1d6;position:relative}.switch.on{background:#34c759}.switch:after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:.15s}.switch.on:after{left:22px}
-.small{font-size:12px;color:#777;line-height:1.4}.save{width:100%;border:0;background:#111;color:#fff;border-radius:14px;padding:14px;font-size:16px;margin-top:5px}
+
+.settingsOverlay{display:none;position:fixed;inset:0;background:#fff;z-index:100;overflow:auto;padding:env(safe-area-inset-top) 22px env(safe-area-inset-bottom)}
+.settingsOverlay.open{display:block}
+.head{display:flex;align-items:center;gap:10px;padding:14px 0}
+.back{border:0;background:none;font-size:17px;padding:10px;cursor:pointer}
+.title{font-size:28px;font-weight:700}
+.card{background:#f2f2f7;border-radius:18px;padding:16px;margin:14px 0}
+.label{font-size:13px;color:#666;margin-bottom:7px}
+input[type="number"],input[type="time"]{width:100%;border:0;background:#fff;border-radius:11px;padding:12px;font-size:17px;outline:none}
+.row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+.switch{width:50px;height:30px;border:0;border-radius:20px;background:#d1d1d6;position:relative;cursor:pointer;padding:0}
+.switch.on{background:#34c759}
+.switch:after{content:"";position:absolute;width:26px;height:26px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px #0003;transition:.15s}
+.switch.on:after{left:22px}
+.small{font-size:12px;color:#777;line-height:1.4}
+.save{width:100%;border:0;background:#111;color:#fff;border-radius:14px;padding:14px;font-size:16px;margin-top:10px;cursor:pointer}
+.reset{width:100%;border:0;background:#f2f2f7;color:#d00;border-radius:14px;padding:14px;font-size:16px;margin-top:10px;cursor:pointer}
+.days{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.dayCheck{background:#fff;border-radius:12px;padding:10px;display:flex;align-items:center;gap:8px}
+.dayCheck input{width:auto;margin:0}
+.timeRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.advancedBtn{width:100%;border:0;background:#fff;border-radius:12px;padding:12px;font-size:15px;text-align:left;cursor:pointer;margin-top:10px}
+.advanced{display:none;margin-top:12px}
+.advanced.open{display:block}
+.dayCard{background:#fff;border:1px solid #e5e5ea;border-radius:15px;padding:13px;margin:10px 0}
+.dayTitle{font-weight:600}
+.dayTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.block{background:#f2f2f7;border-radius:12px;padding:10px;margin-top:8px}
+.blockHead{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#666;margin-bottom:7px}
+.removeBreak{border:0;background:none;color:#d00;font-size:12px;cursor:pointer}
+.addBreak{border:0;background:none;color:#007aff;font-size:13px;padding:7px 0 0;cursor:pointer}
+.status{font-size:12px;color:#34c759;margin-top:8px;min-height:16px}
 </style>
 </head>
 <body>
+
 <div class="app">
- <div class="top"><button class="gear" id="openSettings">⚙︎</button></div>
- <main>
-  <button class="amount" id="amount">0,00 €</button>
-  <div class="tabs">
-   <button class="tab active" data-mode="day">Tag</button>
-   <button class="tab" data-mode="week">Woche</button>
-   <button class="tab" data-mode="month">Monat</button>
+  <div class="top">
+    <button class="gear" id="openSettings" type="button" aria-label="Einstellungen">⚙︎</button>
   </div>
-  <div class="hint" id="hint">Tippen zum Starten</div>
- </main>
+
+  <main>
+    <button class="amount" id="amount" type="button">0,00&nbsp;€</button>
+    <div class="tabs">
+      <button class="tab active" data-mode="day" type="button">Tag</button>
+      <button class="tab" data-mode="week" type="button">Woche</button>
+      <button class="tab" data-mode="month" type="button">Monat</button>
+    </div>
+    <div class="hint" id="hint">Tippen zum Starten</div>
+  </main>
 </div>
 
-<div class="overlay" id="settings">
- <div class="head"><button class="back" id="closeSettings">‹ Zurück</button><div class="title">Einstellungen</div></div>
- <div class="card">
-  <div class="label">Monatsgehalt</div>
-  <input id="salary" type="number" inputmode="decimal" step="0.01" placeholder="2500">
- </div>
- <div class="card">
-  <div class="label">Arbeitszeit pro Woche</div>
-  <input id="weekly" type="number" inputmode="decimal" step="0.1" placeholder="39">
- </div>
- <div class="card">
-  <div class="row"><span>Automatische Arbeitszeit</span><button class="switch" id="autoSwitch"></button></div>
-  <div class="small">Wenn ausgeschaltet, wird nur über Tippen auf den Betrag gestartet und gestoppt.</div>
- </div>
- <button class="save" id="save">Speichern</button>
- <div class="small" style="margin:16px 4px">Die detaillierten Wochentage, unterschiedliche Zeiten und Pausen kommen in der nächsten Version.</div>
+<div class="settingsOverlay" id="settings">
+  <div class="head">
+    <button class="back" id="closeSettings" type="button">‹ Zurück</button>
+    <div class="title">Einstellungen</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Monatsgehalt</div>
+    <input id="salary" type="number" inputmode="decimal" step="0.01" placeholder="2800">
+  </div>
+
+  <div class="card">
+    <div class="label">Arbeitszeit pro Woche</div>
+    <input id="weekly" type="number" inputmode="decimal" step="0.1" placeholder="36">
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <span>Automatische Arbeitszeit</span>
+      <button class="switch" id="autoSwitch" type="button"></button>
+    </div>
+    <div class="small">AN = die Uhr läuft nach deinem Arbeitsplan. AUS = Start/Stopp per Tippen auf den Betrag.</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Wochentage</div>
+    <div class="days" id="dayChecks"></div>
+
+    <div class="label" style="margin-top:14px">Grundarbeitszeit</div>
+    <div class="timeRow">
+      <input id="defaultStart" type="time">
+      <input id="defaultEnd" type="time">
+    </div>
+    <div class="small" style="margin-top:7px">Diese Zeit gilt für alle Tage, die nicht individuell geändert wurden.</div>
+
+    <button class="advancedBtn" id="advancedBtn" type="button">› Erweiterte Einstellungen</button>
+
+    <div class="advanced" id="advanced">
+      <div class="small" style="margin-bottom:8px">Hier kannst du für jeden Tag eigene Zeiten und beliebig viele Pausen festlegen.</div>
+      <div id="advancedDays"></div>
+    </div>
+  </div>
+
+  <button class="save" id="save" type="button">Speichern</button>
+  <button class="reset" id="reset" type="button">Zurücksetzen</button>
+  <div class="status" id="status"></div>
 </div>
 
 <script>
-const formatEuro=n=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n);
-let state=JSON.parse(localStorage.getItem('gelduhr')||'null')||{salary:2500,weekly:39,auto:false,sessions:[]};
-let running=false,start=0,mode='day';
+"use strict";
 
-function workRate(){return (Number(state.salary)||0)/(Number(state.weekly)||1)/52/3600}
-function todayKey(d=new Date()){return d.toISOString().slice(0,10)}
-function monday(d=new Date()){let x=new Date(d);let day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
-function monthStart(d=new Date()){return new Date(d.getFullYear(),d.getMonth(),1)}
-function monthEnd(d=new Date()){return new Date(d.getFullYear(),d.getMonth()+1,1)}
+const DAYS=[
+  {key:"mon",name:"Montag",js:1},
+  {key:"tue",name:"Dienstag",js:2},
+  {key:"wed",name:"Mittwoch",js:3},
+  {key:"thu",name:"Donnerstag",js:4},
+  {key:"fri",name:"Freitag",js:5},
+  {key:"sat",name:"Samstag",js:6},
+  {key:"sun",name:"Sonntag",js:0}
+];
 
-function sessionValue(s,end=Date.now()){
- let a=s.start,b=s.end||end; return Math.max(0,(b-a)/1000)*workRate();
+const defaultDay=(active=true)=>({active,start:"08:00",end:"16:30",individual:false,breaks:[]});
+function makeDefaultDays(){
+  return Object.fromEntries(DAYS.map(d=>[d.key,defaultDay(!["sat","sun"].includes(d.key))]));
 }
-function earned(mode){
- let now=Date.now(), d=new Date();
- let from= mode==='day'?new Date(d.getFullYear(),d.getMonth(),d.getDate()):mode==='week'?monday(d):monthStart(d);
- let to= mode==='day'?new Date(d.getFullYear(),d.getMonth(),d.getDate()+1):mode==='week'?new Date(from.getTime()+7*86400000):monthEnd(d);
- let total=state.sessions.reduce((sum,s)=>{
-   let a=Math.max(s.start,from.getTime()), b=Math.min(s.end||now,to.getTime());
-   return sum+(b>a?(b-a)/1000*workRate():0)
- },0);
- if(running) {let a=Math.max(start,from.getTime()),b=Math.min(now,to.getTime());if(b>a) total+=(b-a)/1000*workRate()}
- return total;
+
+const formatEuro=n=>new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(n);
+
+let state={version:8,salary:2800,weekly:36,auto:false,sessions:[],days:makeDefaultDays()};
+let running=false,start=0,mode="day";
+
+try{
+  const saved=JSON.parse(localStorage.getItem("gelduhr")||"null");
+  if(saved){
+    state.salary=Number(saved.salary)||2800;
+    state.weekly=Number(saved.weekly)||36;
+    state.auto=!!saved.auto;
+    state.sessions=Array.isArray(saved.sessions)?saved.sessions:[];
+    const oldDays=saved.days||{};
+    for(const d of DAYS){
+      const old=oldDays[d.key]||{};
+      state.days[d.key]={
+        active:old.active!==undefined?!!old.active:state.days[d.key].active,
+        start:old.start||"08:00",
+        end:old.end||"16:30",
+        individual:!!old.individual,
+        breaks:Array.isArray(old.breaks)?old.breaks:[]
+      };
+    }
+  }
+}catch(e){}
+
+const settings=document.getElementById("settings");
+const salaryEl=document.getElementById("salary");
+const weeklyEl=document.getElementById("weekly");
+const autoSwitch=document.getElementById("autoSwitch");
+const amount=document.getElementById("amount");
+const hint=document.getElementById("hint");
+const defaultStart=document.getElementById("defaultStart");
+const defaultEnd=document.getElementById("defaultEnd");
+const dayChecks=document.getElementById("dayChecks");
+const advancedDays=document.getElementById("advancedDays");
+const advanced=document.getElementById("advanced");
+const status=document.getElementById("status");
+
+function saveState(){state.version=8;localStorage.setItem("gelduhr",JSON.stringify(state));}
+function parseTime(v){const [h,m]=(v||"00:00").split(":").map(Number);return (h*60+m)*60;}
+function dayKey(date){const js=date.getDay();return DAYS.find(d=>d.js===js).key;}
+function monthStart(d){return new Date(d.getFullYear(),d.getMonth(),1);}
+function monthEnd(d){return new Date(d.getFullYear(),d.getMonth()+1,1);}
+function monday(d){
+  const x=new Date(d);
+  const day=(x.getDay()+6)%7;
+  x.setDate(x.getDate()-day);x.setHours(0,0,0,0);
+  return x;
 }
+function overlap(a1,a2,b1,b2){return Math.max(0,Math.min(a2,b2)-Math.max(a1,b1));}
+
+function scheduledSecondsForMonth(year,month){
+  const first=new Date(year,month,1);
+  const last=new Date(year,month+1,0);
+  let total=0;
+
+  for(let d=new Date(first);d<=last;d.setDate(d.getDate()+1)){
+    const s=state.days[dayKey(d)];
+    if(!s || !s.active) continue;
+    const ws=parseTime(s.start), we=parseTime(s.end);
+    if(we<=ws) continue;
+    let seconds=we-ws;
+    for(const b of s.breaks||[]){
+      const bs=parseTime(b.start),be=parseTime(b.end);
+      if(be>bs) seconds-=overlap(ws,we,bs,be);
+    }
+    total+=Math.max(0,seconds);
+  }
+  return total;
+}
+
+function scheduledSecondsInRange(from,to){
+  if(to<=from)return 0;
+  let total=0;
+  let d=new Date(from);
+  d=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const last=new Date(to);
+  while(d<=new Date(last.getFullYear(),last.getMonth(),last.getDate())){
+    const s=state.days[dayKey(d)];
+    if(s && s.active){
+      const dayStart=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+      const workA=dayStart.getTime()+parseTime(s.start)*1000;
+      const workB=dayStart.getTime()+parseTime(s.end)*1000;
+      total+=overlap(from,to,workA,workB);
+      for(const b of s.breaks||[]){
+        const bs=dayStart.getTime()+parseTime(b.start)*1000;
+        const be=dayStart.getTime()+parseTime(b.end)*1000;
+        total-=overlap(from,to,bs,be);
+      }
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return Math.max(0,total/1000);
+}
+
+function autoEarned(from,to){
+  if(to<=from)return 0;
+  let total=0;
+  const startDate=new Date(from.getFullYear(),from.getMonth(),1);
+  const endDate=new Date(to.getFullYear(),to.getMonth(),1);
+
+  for(let d=new Date(startDate);d<=endDate;d=new Date(d.getFullYear(),d.getMonth()+1,1)){
+    const a=Math.max(from.getTime(),new Date(d.getFullYear(),d.getMonth(),1).getTime());
+    const b=Math.min(to.getTime(),new Date(d.getFullYear(),d.getMonth()+1,1).getTime());
+    if(b<=a)continue;
+    const monthSeconds=scheduledSecondsForMonth(d.getFullYear(),d.getMonth());
+    if(monthSeconds<=0)continue;
+    const worked=scheduledSecondsInRange(a,b);
+    total += (worked/monthSeconds)*(Number(state.salary)||0);
+  }
+  return total;
+}
+
+function manualEarned(from,to){
+  const now=Date.now();
+  let total=0;
+  // Manual value is based on the configured average weekly hours.
+  const perSecond=(Number(state.salary)||0)*12/((Number(state.weekly)||1)*52*3600);
+  for(const s of state.sessions){
+    const a=Math.max(Number(s.start),from.getTime());
+    const b=Math.min(Number(s.end),to.getTime());
+    if(b>a)total+=(b-a)/1000*perSecond;
+  }
+  if(running){
+    const a=Math.max(start,from.getTime());
+    const b=Math.min(now,to.getTime());
+    if(b>a)total+=(b-a)/1000*perSecond;
+  }
+  return total;
+}
+
+function currentRange(){
+  const now=new Date();
+  if(mode==="day")return [
+    new Date(now.getFullYear(),now.getMonth(),now.getDate()),
+    new Date(now.getFullYear(),now.getMonth(),now.getDate()+1)
+  ];
+  if(mode==="week"){
+    const m=monday(now);
+    return [m,new Date(m.getTime()+7*86400000)];
+  }
+  return [monthStart(now),monthEnd(now)];
+}
+
+function isAutoActiveNow(){
+  const n=new Date();
+  const s=state.days[dayKey(n)];
+  if(!s||!s.active)return false;
+  const sec=n.getHours()*3600+n.getMinutes()*60+n.getSeconds();
+  const ws=parseTime(s.start),we=parseTime(s.end);
+  if(sec<ws||sec>=we)return false;
+  for(const b of s.breaks||[]){
+    const bs=parseTime(b.start),be=parseTime(b.end);
+    if(sec>=bs&&sec<be)return false;
+  }
+  return true;
+}
+
 function render(){
- document.getElementById('amount').textContent=formatEuro(earned(mode));
- document.getElementById('amount').classList.toggle('running',running);
- document.getElementById('hint').textContent=running?'Tippen zum Stoppen':'Tippen zum Starten';
- document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.mode===mode));
+  const [from,to]=currentRange();
+  const now=Date.now();
+  let value;
+  if(state.auto){
+    value=autoEarned(from,new Date(Math.min(now,to.getTime())));
+    const active=isAutoActiveNow();
+    amount.classList.toggle("running",active);
+    hint.textContent=active?"Automatisch aktiv":"Außerhalb der Arbeitszeit";
+  }else{
+    value=manualEarned(from,to);
+    amount.classList.toggle("running",running);
+    hint.textContent=running?"Tippen zum Stoppen":"Tippen zum Starten";
+  }
+  amount.textContent=formatEuro(value);
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));
 }
-document.querySelectorAll('.tab').forEach(x=>x.onclick=()=>{mode=x.dataset.mode;render()});
-document.getElementById('amount').onclick=()=>{
- if(state.auto) return;
- if(!running){running=true;start=Date.now()}else{state.sessions.push({start,end:Date.now()});running=false;start=0;localStorage.setItem('gelduhr',JSON.stringify(state))}
- render();
-};
-setInterval(render,250);
 
-const settings=document.getElementById('settings');
-document.getElementById('openSettings').onclick=()=>{
- document.getElementById('salary').value=state.salary;
- document.getElementById('weekly').value=state.weekly;
- document.getElementById('autoSwitch').classList.toggle('on',state.auto);
- settings.classList.add('open')
-};
-document.getElementById('closeSettings').onclick=()=>settings.classList.remove('open');
-document.getElementById('autoSwitch').onclick=()=>document.getElementById('autoSwitch').classList.toggle('on');
-document.getElementById('save').onclick=()=>{
- state.salary=Number(document.getElementById('salary').value)||0;
- state.weekly=Number(document.getElementById('weekly').value)||1;
- state.auto=document.getElementById('autoSwitch').classList.contains('on');
- localStorage.setItem('gelduhr',JSON.stringify(state));settings.classList.remove('open');render()
-};
+function renderBasicDays(){
+  dayChecks.innerHTML="";
+  for(const d of DAYS){
+    const label=document.createElement("label");
+    label.className="dayCheck";
+    label.innerHTML=`<input type="checkbox" data-key="${d.key}"><span>${d.name}</span>`;
+    label.querySelector("input").checked=state.days[d.key].active;
+    dayChecks.appendChild(label);
+  }
+}
+
+function renderAdvancedDays(){
+  advancedDays.innerHTML="";
+  for(const d of DAYS){
+    const s=state.days[d.key];
+    const card=document.createElement("div");
+    card.className="dayCard";
+    card.dataset.key=d.key;
+    card.innerHTML=`
+      <div class="dayTop">
+        <strong>${d.name}</strong>
+        <label class="small"><input type="checkbox" class="individual"> eigene Zeit</label>
+      </div>
+      <div class="timeRow">
+        <input type="time" class="dayStart">
+        <input type="time" class="dayEnd">
+      </div>
+      <div class="breaks"></div>
+      <button type="button" class="addBreak">+ Pause hinzufügen</button>
+    `;
+    card.querySelector(".individual").checked=!!s.individual;
+    card.querySelector(".dayStart").value=s.start;
+    card.querySelector(".dayEnd").value=s.end;
+
+    const breaks=card.querySelector(".breaks");
+    for(const b of s.breaks||[]){
+      addBreakRow(breaks,b.start,b.end);
+    }
+    card.querySelector(".addBreak").addEventListener("click",()=>addBreakRow(breaks,"12:00","12:30"));
+    advancedDays.appendChild(card);
+  }
+}
+
+function addBreakRow(container,startVal,endVal){
+  const row=document.createElement("div");
+  row.className="block";
+  row.innerHTML=`
+    <div class="blockHead"><span>Pause</span><button type="button" class="removeBreak">Entfernen</button></div>
+    <div class="timeRow">
+      <input type="time" class="breakStart" value="${startVal}">
+      <input type="time" class="breakEnd" value="${endVal}">
+    </div>`;
+  row.querySelector(".removeBreak").addEventListener("click",()=>row.remove());
+  container.appendChild(row);
+}
+
+function openSettings(){
+  salaryEl.value=state.salary;
+  weeklyEl.value=state.weekly;
+  autoSwitch.classList.toggle("on",state.auto);
+  // Use Monday's time as the general default.
+  defaultStart.value=state.days.mon.start;
+  defaultEnd.value=state.days.mon.end;
+  renderBasicDays();
+  renderAdvancedDays();
+  status.textContent="";
+  settings.classList.add("open");
+}
+
+function saveSettings(){
+  const oldDays=JSON.parse(JSON.stringify(state.days));
+  state.salary=Number(salaryEl.value)||0;
+  state.weekly=Number(weeklyEl.value)||1;
+  state.auto=autoSwitch.classList.contains("on");
+
+  const selected={};
+  dayChecks.querySelectorAll("input").forEach(cb=>selected[cb.dataset.key]=cb.checked);
+
+  const baseStart=defaultStart.value||"08:00";
+  const baseEnd=defaultEnd.value||"16:30";
+
+  for(const d of DAYS){
+    const card=advancedDays.querySelector(`.dayCard[data-key="${d.key}"]`);
+    const individual=card.querySelector(".individual").checked;
+    const startValue=card.querySelector(".dayStart").value||baseStart;
+    const endValue=card.querySelector(".dayEnd").value||baseEnd;
+    const breaks=[...card.querySelectorAll(".block")].map(b=>({
+      start:b.querySelector(".breakStart").value||"12:00",
+      end:b.querySelector(".breakEnd").value||"12:30"
+    }));
+
+    state.days[d.key]={
+      active:!!selected[d.key],
+      individual,
+      start:individual?startValue:baseStart,
+      end:individual?endValue:baseEnd,
+      breaks:individual?breaks:[]
+    };
+  }
+
+  saveState();
+  status.textContent="Gespeichert ✓";
+  render();
+  setTimeout(()=>settings.classList.remove("open"),400);
+}
+
+document.getElementById("openSettings").addEventListener("click",openSettings);
+document.getElementById("closeSettings").addEventListener("click",()=>settings.classList.remove("open"));
+document.getElementById("advancedBtn").addEventListener("click",()=>{
+  advanced.classList.toggle("open");
+  document.getElementById("advancedBtn").textContent=advanced.classList.contains("open")?"⌄ Erweiterte Einstellungen":"› Erweiterte Einstellungen";
+});
+document.getElementById("autoSwitch").addEventListener("click",()=>autoSwitch.classList.toggle("on"));
+document.getElementById("save").addEventListener("click",saveSettings);
+
+document.getElementById("reset").addEventListener("click",()=>{
+  state.sessions=[];
+  running=false;
+  start=0;
+  saveState();
+  render();
+  status.textContent="Zurückgesetzt ✓";
+});
+
+amount.addEventListener("click",()=>{
+  if(state.auto)return;
+  if(!running){running=true;start=Date.now();}
+  else{
+    state.sessions.push({start,end:Date.now()});
+    running=false;
+    start=0;
+    saveState();
+  }
+  render();
+});
+
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
+  mode=b.dataset.mode;
+  render();
+}));
+
 render();
+setInterval(render,250);
 </script>
 </body>
 </html>
